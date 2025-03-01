@@ -1,3 +1,5 @@
+#include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -5,6 +7,29 @@
 #include <vector>
 
 std::unordered_set<std::string> builtins = {"echo", "type", "exit"};
+std::vector<std::string> existing_paths;
+
+std::string search_file(const std::string &directory,
+                        const std::string &filename) {
+  try {
+    if (!std::filesystem::exists(directory) ||
+        !std::filesystem::is_directory(directory)) {
+      return "";
+    }
+
+    for (const auto &entry : std::filesystem::directory_iterator(directory)) {
+      if (entry.is_regular_file() && entry.path().filename() == filename) {
+        return entry.path();
+      }
+    }
+
+    return "";
+
+  } catch (std::filesystem::filesystem_error &e) {
+    std::cerr << "Filesystem error: " << e.what() << '\n';
+    return "";
+  }
+}
 
 void check_command(std::string &total_command) {
   std::vector<std::string> split_command;
@@ -22,11 +47,24 @@ void check_command(std::string &total_command) {
     }
     std::cout << res_string << '\n';
   } else if (split_command[0] == "type") {
+    std::string found_path;
+    for (std::string &dir : existing_paths) {
+      std::string path_searched = search_file(dir, split_command[1]);
+      if (path_searched.size() > 0) {
+        found_path = path_searched;
+        break;
+      }
+    }
+
     if (builtins.find(split_command[1]) != builtins.end()) {
       std::cout << split_command[1] << " is a shell builtin\n";
+      return;
+    } else if (found_path.size() > 1) {
+      std::cout << split_command[1] << " is " << found_path << '\n';
     } else {
       std::cout << split_command[1] << ": not found\n";
     }
+
   } else {
     std::cout << split_command[0] << ":"
               << " command not found\n";
@@ -36,6 +74,14 @@ void check_command(std::string &total_command) {
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
+
+  const char *path = getenv("PATH");
+  std::stringstream ss(path);
+  std::string curr_path;
+
+  while (std::getline(ss, curr_path, ':')) {
+    existing_paths.emplace_back(curr_path);
+  }
 
   while (true) {
     std::cout << "$ ";
