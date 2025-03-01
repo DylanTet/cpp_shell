@@ -1,15 +1,34 @@
-#include <functional>
 #include <iostream>
+#include <sstream>
 #include <string>
-#include <string_view>
-#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
-void check_command(std::string &command) {
-  if (command.find("echo") != std::string::npos) {
-    std::string echo_string = command.erase(0, 5);
-    std::cout << echo_string << '\n';
+std::unordered_set<std::string> builtins = {"echo", "type", "exit"};
+
+void check_command(std::string &total_command) {
+  std::vector<std::string> split_command;
+  std::stringstream ss(total_command);
+  std::string word;
+
+  while (ss >> word) {
+    split_command.push_back(word);
+  }
+
+  if (split_command[0] == "echo") {
+    std::string res_string;
+    for (int i = 1; i < split_command.size(); i++) {
+      res_string += split_command[i] + " ";
+    }
+    std::cout << res_string << '\n';
+  } else if (split_command[0] == "type") {
+    if (builtins.find(split_command[1]) != builtins.end()) {
+      std::cout << split_command[1] << " is a shell builtin\n";
+    } else {
+      std::cout << split_command[1] << ": not found\n";
+    }
   } else {
-    std::cout << command << ":"
+    std::cout << split_command[0] << ":"
               << " command not found\n";
   }
 }
