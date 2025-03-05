@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <unistd.h>
 #include <unordered_set>
 #include <vector>
 
@@ -31,6 +33,16 @@ std::string search_file(const std::string &directory,
   }
 }
 
+void run_provided_program(std::vector<std::string> &full_command) {
+  std::string exe_with_args;
+  for (int i = 0; i < full_command.size(); i++) {
+    exe_with_args += ' ';
+    exe_with_args += full_command[i];
+  }
+
+  system(exe_with_args.c_str());
+}
+
 void check_command(std::string &total_command) {
   std::vector<std::string> split_command;
   std::stringstream ss(total_command);
@@ -46,6 +58,7 @@ void check_command(std::string &total_command) {
       res_string += split_command[i] + " ";
     }
     std::cout << res_string << '\n';
+
   } else if (split_command[0] == "type") {
     std::string found_path;
     for (std::string &dir : existing_paths) {
@@ -66,8 +79,21 @@ void check_command(std::string &total_command) {
     }
 
   } else {
-    std::cout << split_command[0] << ":"
-              << " command not found\n";
+    bool found_path;
+    for (std::string &dir : existing_paths) {
+      std::string path_searched = search_file(dir, split_command[0]);
+      if (path_searched.size() > 0) {
+        found_path = true;
+        break;
+      }
+    }
+
+    if (!found_path) {
+      std::cout << split_command[0] << ":"
+                << " command not found\n";
+    } else {
+      run_provided_program(split_command);
+    }
   }
 }
 
