@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <vector>
 
-std::unordered_set<std::string> builtins = {"echo", "type", "exit"};
+std::unordered_set<std::string> builtins = {"echo", "type", "exit", "pwd"};
 std::vector<std::string> existing_paths;
 
 std::string search_file(const std::string &directory,
@@ -59,6 +59,9 @@ void check_command(std::string &total_command) {
     }
     std::cout << res_string << '\n';
 
+  } else if (split_command[0] == "pwd") {
+    std::string curr_path = std::filesystem::current_path();
+    std::cout << curr_path << '\n';
   } else if (split_command[0] == "type") {
     std::string found_path;
     for (std::string &dir : existing_paths) {
