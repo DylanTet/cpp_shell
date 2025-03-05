@@ -10,6 +10,7 @@
 
 std::unordered_set<std::string> builtins = {"echo", "type", "exit", "pwd"};
 std::vector<std::string> existing_paths;
+std::string curr_directory = std::filesystem::current_path();
 
 std::string search_file(const std::string &directory,
                         const std::string &filename) {
@@ -58,10 +59,16 @@ void check_command(std::string &total_command) {
       res_string += split_command[i] + " ";
     }
     std::cout << res_string << '\n';
-
   } else if (split_command[0] == "pwd") {
-    std::string curr_path = std::filesystem::current_path();
-    std::cout << curr_path << '\n';
+    std::cout << curr_directory << '\n';
+  } else if (split_command[0] == "cd") {
+    if (!std::filesystem::is_directory(split_command[1])) {
+      std::cout << "cd: " << split_command[1]
+                << ": No such file or directory\n";
+      return;
+    }
+
+    curr_directory = split_command[1];
   } else if (split_command[0] == "type") {
     std::string found_path;
     for (std::string &dir : existing_paths) {
